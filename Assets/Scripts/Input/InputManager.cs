@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 
 public class InputManager : MonoBehaviour
@@ -17,9 +18,12 @@ public class InputManager : MonoBehaviour
 
     private void Update()
     {
+        if (GameManager.CurrentSession != GameSession.Gameplay)return;
+
         if (Input.touchCount > 0)
         {
             var touch = Input.GetTouch(0);
+            if (EventSystem.current.IsPointerOverGameObject(touch.fingerId)) return;
             
             switch (touch.phase)
             {

@@ -11,27 +11,28 @@ public class StickAnimationController : MonoBehaviour
     [Header("Options")]
     [SerializeField] private float sensitivity = 2f;
     
+    private static readonly int IsReleased = Animator.StringToHash("IsReleased");
     private float _deltaX;
     private float _normalizedX;
     private bool _isPressed;
-    private static readonly int IsReleased = Animator.StringToHash("IsReleased");
 
 
     private void Start()
     {
-        InputManager.OnInputStart += HandleInputStart;
-        InputManager.OnInputEnd += HandleInputEnd;
+        GameManager.OnSessionChanged += HandleGameSession;
     }
+
 
     private void OnDestroy()
     {
-        InputManager.OnInputStart -= HandleInputStart;
-        InputManager.OnInputEnd -= HandleInputEnd;
-
+        GameManager.OnSessionChanged -= HandleGameSession;
     }
+    
 
     private void Update()
     {
+        if (GameManager.CurrentSession != GameSession.Gameplay)return;
+        
         Vector2 touchStart = InputManager.TouchStart;
         Vector2 touchCurrent = InputManager.TouchCurrent;
 
@@ -45,6 +46,23 @@ public class StickAnimationController : MonoBehaviour
         }
 
     }
+    
+    private void HandleGameSession(GameSession currentSession)
+    {
+        switch (currentSession)
+        {
+            case GameSession.Gameplay:
+                InputManager.OnInputStart += HandleInputStart;
+                InputManager.OnInputEnd += HandleInputEnd;
+                Debug.Log("Gameplay");
+                break;
+            case GameSession.GameOver:
+                InputManager.OnInputStart -= HandleInputStart;
+                InputManager.OnInputEnd -= HandleInputEnd;
+                break;
+        }
+    }
+    
     private void HandleInputStart(Vector2 touchPos)
     {
         _isPressed = true;
@@ -56,7 +74,9 @@ public class StickAnimationController : MonoBehaviour
     {
         _isPressed = false;
         animator.SetBool(IsReleased, true);
-        animator.CrossFadeInFixedTime("Armature_Release_Stick", 0.25f, 0);
+
+        animator.speed = Mathf.Lerp(0.5f, 1.5f, _normalizedX);
+        animator.CrossFade("Armature_Release_Stick", 0.2f, 0);
         
     }
     
